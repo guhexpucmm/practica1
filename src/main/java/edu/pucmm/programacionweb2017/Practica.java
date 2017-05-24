@@ -1,15 +1,12 @@
 package edu.pucmm.programacionweb2017;
 
-import org.apache.http.HttpResponse;
-import org.apache.http.client.HttpClient;
-import org.apache.http.client.methods.HttpGet;
-import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+import org.jsoup.nodes.Element;
 
-import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStreamReader;
 import java.util.Scanner;
 
 /**
@@ -24,6 +21,7 @@ public class Practica {
     private final char CAMBIAR_URL = 'Q';
     //Constante para la opcion salir
     private final char SALIR = 'Z';
+    private Document document;
     private String url;
 
     public Practica() {
@@ -78,6 +76,15 @@ public class Practica {
             url = inputURL();
             System.out.println("Pagina digitada: " + url);
 
+            try {
+                System.out.println("Haciendo el request hacia la url: " + url);
+                System.out.println("Porfavor espere...");
+                document = Jsoup.connect(url).get();
+                System.out.println("Request finalizado.");
+            } catch (IOException e) {
+                logger.debug("Error al conectarse al url.", e);
+            }
+
             //Ciclo para presentar las opciones
             while (opt != CAMBIAR_URL) {
                 dibujarMenu();
@@ -86,30 +93,37 @@ public class Practica {
 
                 switch (opt) {
                     case 'A':
+                        separador();
                         acapiteA();
                         separador();
                         break;
                     case 'B':
+                        separador();
                         acapiteB();
                         separador();
                         break;
                     case 'C':
+                        separador();
                         acapiteC();
                         separador();
                         break;
                     case 'D':
+                        separador();
                         acapiteD();
                         separador();
                         break;
                     case 'E':
+                        separador();
                         acapiteE();
                         separador();
                         break;
                     case 'F':
+                        separador();
                         acapiteF();
                         separador();
                         break;
                     case 'V':
+                        separador();
                         visualizarHtml();
                         separador();
                     case 'Q':
@@ -131,76 +145,28 @@ public class Practica {
         }
     }
 
-    //Creo una instancia de buffered reader para leer cada linea del request
-    public BufferedReader getHttpResponseContent(String url) {
-        try {
-            System.out.println("**********CARGANDO EL REQUEST, FAVOR ESPERAR...*********");
-            //Creo las instancias para mandar un request al URL digitado
-            HttpClient httpClient = new DefaultHttpClient();
-            HttpGet httpGet = new HttpGet(url);
-            //Mando el request
-            HttpResponse httpResponse = httpClient.execute(httpGet);
-
-            System.out.println("***********REQUEST CARGADO...**********");
-            return new BufferedReader(new InputStreamReader(httpResponse.getEntity().getContent()));
-        } catch (IOException e) {
-            logger.debug("Error en el response del http request.", e);
-            return null;
-        }
-    }
-
     public void acapiteA() {
-        BufferedReader bufferedReader = null;
-
-        try {
-            bufferedReader = getHttpResponseContent(url);
-
-            //Imprimo el resultado utilizando streams
-            System.out.println("El numero total de lineas es: " + bufferedReader.lines().count());
-
-            bufferedReader.close();
-        } catch (IOException e) {
-            logger.debug("Error al cerrar el buffered reader.", e);
-        }
+        System.out.println("Total de lineas: " + document.html().split("\n").length);
     }
 
     public void acapiteB() {
-        BufferedReader bufferedReader = null;
-
-        try {
-            bufferedReader = getHttpResponseContent(url);
-
-            //Imprimo el resutado utilizando streams
-            System.out.println("La cantidad total de parrafos (p) es: " + bufferedReader.lines().filter(s -> s.contains("<p>")).count());
-
-            bufferedReader.close();
-        } catch (IOException e) {
-            logger.debug("Error al cerrar el buffered reader.", e);
-        }
+        System.out.println("Total de parrafos: " + document.getElementsByTag("p").size());
     }
 
     public void acapiteC() {
-        BufferedReader bufferedReader = null;
-
-        try {
-            bufferedReader = getHttpResponseContent(url);
-
-            //todo Quede en el acapite C
-
-            //Imprimo el resutado utilizando streams
-            System.out.println("La cantidad total de imagenes (img) dentro de los parrafos (p) es: ");
-            bufferedReader.close();
-        } catch (IOException e) {
-            logger.debug("Error al cerrar el buffered reader.", e);
-        }
+        System.out.println("Total de imagenes dentro de los parrafos: " + document.getElementsByTag("p").iterator().next().children().tagName("img").stream().count());
     }
 
     public void acapiteD() {
-
+        System.out.println("Total de formularios: " + document.getElementsByTag("form").attr("method", "post").size());
     }
 
     public void acapiteE() {
-
+        for (Element element : document.getElementsByTag("form").iterator().next().children()) {
+            for (Element element1 : document.getElementsByTag("input")) {
+                System.out.println(element1);
+            }
+        }
     }
 
     public void acapiteF() {
@@ -208,17 +174,6 @@ public class Practica {
     }
 
     public void visualizarHtml() {
-        BufferedReader bufferedReader = null;
-
-        try {
-            bufferedReader = getHttpResponseContent(url);
-
-            //Imprimo el documento HTML del request utilizando streams
-            bufferedReader.lines().forEach(s -> System.out.println(s));
-
-            bufferedReader.close();
-        } catch (IOException e) {
-            logger.debug("Error al cerrar el buffered reader.", e);
-        }
+        System.out.println(document.html().toString());
     }
 }
