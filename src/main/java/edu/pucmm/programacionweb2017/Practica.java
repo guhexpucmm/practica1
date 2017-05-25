@@ -2,11 +2,13 @@ package edu.pucmm.programacionweb2017;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
+import java.util.NoSuchElementException;
 import java.util.Scanner;
 
 /**
@@ -21,7 +23,9 @@ public class Practica {
     private final char CAMBIAR_URL = 'Q';
     //Constante para la opcion salir
     private final char SALIR = 'Z';
+    //Instancia documento para extraer el archivo html
     private Document document;
+    //Variable url para guardar el url digitado
     private String url;
 
     public Practica() {
@@ -29,7 +33,7 @@ public class Practica {
     }
 
     //Funcion para dibujar el menu
-    public void dibujarMenu() {
+    private void dibujarMenu() {
         System.out.println("###########[/programacionweb2017/practica1]###########");
         System.out.println("#Menu de opciones                                    #");
         System.out.println("#[A] -> Acapite A                                    #");
@@ -45,26 +49,26 @@ public class Practica {
     }
 
     //Funcion para dibujar un separador
-    public void separador() {
+    private void separador() {
         System.out.println("===========================================================");
     }
 
     //Funcion que me devuelve un char, la opcion seleccionada.
-    public char inputOption() {
+    private char inputOption() {
         Scanner scanner = new Scanner(System.in);
         System.out.print("Digite opcion > ");
         return scanner.next().toUpperCase().charAt(0);
     }
 
     //Funcion que me devuelve la URL digitada por el usuario.
-    public String inputURL() {
+    private String inputURL() {
         Scanner scanner = new Scanner(System.in);
         System.out.println("Digite solo el nombre y el dominio de la pagina: ");
         System.out.print("> ");
         return PREFIX + scanner.next();
     }
 
-    public void logica() {
+    private void logica() {
         char opt = 0;
 
         while (opt != SALIR) {
@@ -145,35 +149,75 @@ public class Practica {
         }
     }
 
-    public void acapiteA() {
+    //Indicar la cantidad de lineas del recurso retornado.
+    private void acapiteA() {
         System.out.println("Total de lineas: " + document.html().split("\n").length);
     }
 
-    public void acapiteB() {
+    //Indicar la cantidad de párrafos (p) que contiene el documento HTML .
+    private void acapiteB() {
         System.out.println("Total de parrafos: " + document.getElementsByTag("p").size());
     }
 
-    public void acapiteC() {
-        System.out.println("Total de imagenes dentro de los parrafos: " + document.getElementsByTag("p").iterator().next().children().tagName("img").stream().count());
+    //Indicar la cantidad de imágenes (img) dentro de los párrafos que
+    //contiene el archivo HTML.
+    private void acapiteC() {
+        try {
+            int cant = 0;
+
+            for (Element element : document.getElementsByTag("p").iterator().next().children()) {
+                if (element.tagName().equals("img"))
+                    cant++;
+            }
+
+            System.out.println("Total de imagenes dentro de los parrafos: " + cant);
+        } catch (NoSuchElementException e) {
+            logger.debug("Elemento no existe.", e);
+        }
     }
 
-    public void acapiteD() {
-        System.out.println("Total de formularios: " + document.getElementsByTag("form").attr("method", "post").size());
+    //indicar la cantidad de formularios (form) que contiene el HTML por
+    //categorizando por el método implementado POST o GET.
+    private void acapiteD() {
+        System.out.println("Total de formularios (POST): " + document.getElementsByTag("form").attr("method", "post").size());
+        System.out.println("Total de formularios (GET): " + document.getElementsByTag("form").attr("method", "get").size());
     }
 
-    public void acapiteE() {
+    //Para cada formulario mostrar los campos del tipo input y su
+    //respectivo tipo que contiene en el documento HTML.
+    private void acapiteE() {
         for (Element element : document.getElementsByTag("form").iterator().next().children()) {
-            for (Element element1 : document.getElementsByTag("input")) {
-                System.out.println(element1);
+            for (Element element1 : element.getAllElements()) {
+                if (element1.tagName().equals("input"))
+                    System.out.println(element1);
             }
         }
     }
 
-    public void acapiteF() {
+    //Para cada formulario “parseado”, identificar que el método de envío
+    //del formulario sea por utilizando el método POST y enviar una
+    //petición al servidor, con el parámetro llamado asignatura y valor
+    //practica1 y mostrar la respuesta por la salida estandar.
+    private void acapiteF() {
+        Connection.Response response = null;
 
+        try {
+            System.out.println("Mandando peticion al servidor " + url);
+            response = Jsoup.connect(url)
+                    .method(Connection.Method.POST)
+                    .data("asignatura", "practica1")
+                    .execute();
+
+            System.out.println("Peticion enviada.");
+            System.out.println("Status: " + response.statusMessage());
+            response.cookies().forEach((s, s2) -> System.out.println(s + ": " + s2));
+        } catch (IOException e) {
+            logger.debug("Error al intentar mandar la peticion al servidor + " + url, e);
+        }
     }
 
-    public void visualizarHtml() {
+    //Metodo para visualizar el contenido del documento en html
+    private void visualizarHtml() {
         System.out.println(document.html().toString());
     }
 }

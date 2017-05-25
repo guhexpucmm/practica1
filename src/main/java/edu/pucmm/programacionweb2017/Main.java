@@ -12,6 +12,7 @@ public class Main {
 
     public static void main(String[] args) {
         logger.info("Iniciando programa.");
-        Practica practica = new Practica();
+        //Nueva instancia de la practica1
+        new Practica();
     }
 }
