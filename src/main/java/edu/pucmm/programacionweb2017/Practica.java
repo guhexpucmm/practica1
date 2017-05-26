@@ -8,6 +8,8 @@ import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.Scanner;
 
@@ -213,19 +215,35 @@ public class Practica {
     //practica1 y mostrar la respuesta por la salida estandar.
     private void acapiteF() {
         Connection.Response response = null;
+        Document doc = null;
+        Map<String, String> cookies = null, parametros = new HashMap<>();
 
         try {
             System.out.println("Mandando peticion al servidor " + url);
+
+            parametros.put("asignatura", "practica1");
+
             response = Jsoup.connect(url)
                     .method(Connection.Method.POST)
-                    .data("asignatura", "practica1")
+                    .execute();
+
+            cookies = response.cookies();
+
+            response = Jsoup.connect(url)
+                    .data(parametros)
+                    .cookies(cookies)
+                    .followRedirects(true)
                     .execute();
 
             System.out.println("Peticion enviada.");
-            System.out.println("Status: " + response.statusMessage());
-            response.cookies().forEach((s, s2) -> System.out.println(s + ": " + s2));
+            System.out.println("HTTPS status: " + response.statusCode() + " (" + response.statusMessage() + ")");
+
+            doc = response.parse();
+
+            System.out.println("Cookies: ");
+            cookies.forEach((s, s2) -> System.out.println("-" + s + " -> " + s2));
         } catch (IOException e) {
-            logger.debug("Error al intentar mandar la peticion al servidor + " + url, e.getMessage());
+            logger.debug("Error al intentar mandar la peticion al servidor " + url, e.getMessage());
         }
     }
 
