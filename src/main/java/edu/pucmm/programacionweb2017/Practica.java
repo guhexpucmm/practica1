@@ -216,7 +216,7 @@ public class Practica {
     private void acapiteF() {
         Connection.Response response = null;
         Document doc = null;
-        Map<String, String> cookies = null, parametros = new HashMap<>();
+        Map<String, String> parametros = new HashMap<>();
 
         try {
             System.out.println("Mandando peticion al servidor " + url);
@@ -225,23 +225,11 @@ public class Practica {
 
             response = Jsoup.connect(url)
                     .method(Connection.Method.POST)
-                    .execute();
-
-            cookies = response.cookies();
-
-            response = Jsoup.connect(url)
                     .data(parametros)
-                    .cookies(cookies)
-                    .followRedirects(true)
                     .execute();
 
             System.out.println("Peticion enviada.");
             System.out.println("HTTPS status: " + response.statusCode() + " (" + response.statusMessage() + ")");
-
-            doc = response.parse();
-
-            System.out.println("Cookies: ");
-            cookies.forEach((s, s2) -> System.out.println("-" + s + " -> " + s2));
         } catch (IOException e) {
             logger.debug("Error al intentar mandar la peticion al servidor " + url, e.getMessage());
         }
