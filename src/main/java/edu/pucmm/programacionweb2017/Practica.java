@@ -20,7 +20,7 @@ public class Practica {
     //Log para mostrar logs en la consola
     private final Logger logger = LogManager.getLogger();
     //Constante prefijo para formar la URL
-    private final String PREFIX = "https://www.";
+    private final String PREFIX = "http://";
     //Constante para cambiar el url
     private final char CAMBIAR_URL = 'Q';
     //Constante para la opcion salir
@@ -170,14 +170,15 @@ public class Practica {
     //contiene el archivo HTML.
     private void acapiteC() {
         try {
-            int cant = 0;
+            int[] cant = {0};
 
-            for (Element element : document.getElementsByTag("p").iterator().next().children()) {
-                if (element.tagName().equals("img"))
-                    cant++;
-            }
+            document.getElementsByTag("p").forEach(element -> {
+                element.getElementsByTag("img").forEach(element1 -> {
+                    cant[0]++;
+                });
+            });
 
-            System.out.println("Total de imagenes dentro de los parrafos: " + cant);
+            System.out.println("Total de imagenes dentro de los parrafos: " + cant[0]);
         } catch (NoSuchElementException e) {
             logger.debug("Error. Elemento no existe.", e.getMessage());
         }
@@ -187,8 +188,23 @@ public class Practica {
     //categorizando por el método implementado POST o GET.
     private void acapiteD() {
         try {
-            System.out.println("Total de formularios (POST): " + document.getElementsByTag("form").attr("method", "post").size());
-            System.out.println("Total de formularios (GET): " + document.getElementsByTag("form").attr("method", "get").size());
+            int[] sizePost = {0};
+            int[] sizeGet = {0};
+
+            document.getElementsByTag("form").forEach(element -> {
+                element.getElementsByAttributeValue("method", "post").forEach(element1 -> {
+                    sizePost[0]++;
+                });
+            });
+
+            document.getElementsByTag("form").forEach(element -> {
+                element.getElementsByAttributeValue("method", "get").forEach(element1 -> {
+                    sizeGet[0]++;
+                });
+            });
+
+            System.out.println("Total de formularios (POST): " + sizePost[0]);
+            System.out.println("Total de formularios (GET): " + sizeGet[0]);
         } catch (NoSuchElementException e) {
             logger.debug("Error. Elemento no existe.", e.getMessage());
         }
@@ -198,11 +214,8 @@ public class Practica {
     //respectivo tipo que contiene en el documento HTML.
     private void acapiteE() {
         try {
-            for (Element element : document.getElementsByTag("form").iterator().next().children()) {
-                for (Element element1 : element.getAllElements()) {
-                    if (element1.tagName().equals("input"))
-                        System.out.println(element1);
-                }
+            for (Element element : document.getElementsByTag("form")) {
+                System.out.println(element);
             }
         } catch (NoSuchElementException e) {
             logger.debug("Error. Elemento no existe.", e.getMessage());
@@ -219,17 +232,20 @@ public class Practica {
         Map<String, String> parametros = new HashMap<>();
 
         try {
-            System.out.println("Mandando peticion al servidor " + url);
+            for (Element element : document.getElementsByTag("form")) {
+                String absURL = element.absUrl("action");
 
-            parametros.put("asignatura", "practica1");
+                if (element.attr("method").equals("post")) {
+                    parametros.put("asignatura", "practica1");
 
-            response = Jsoup.connect(url)
-                    .method(Connection.Method.POST)
-                    .data(parametros)
-                    .execute();
+                    doc = Jsoup.connect(absURL)
+                            .method(Connection.Method.POST)
+                            .data(parametros)
+                            .post();
 
-            System.out.println("Peticion enviada.");
-            System.out.println("HTTPS status: " + response.statusCode() + " (" + response.statusMessage() + ")");
+                    System.out.println(doc.outerHtml());
+                }
+            }
         } catch (IOException e) {
             logger.debug("Error al intentar mandar la peticion al servidor " + url, e.getMessage());
         }
